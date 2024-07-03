@@ -5,14 +5,24 @@
  * @format
  */
 
-import React from 'react';
+import React, {useEffect, useState} from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 import type {PropsWithChildren} from 'react';
+import {
+  GluestackUIProvider,
+  Text,
+  Center,
+  Slider,
+  SliderFilledTrack,
+  SliderThumb,
+  SliderTrack,
+} from '@gluestack-ui/themed';
+import {config} from '@gluestack-ui/config';
 import {
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
-  Text,
   useColorScheme,
   View,
 } from 'react-native';
@@ -24,75 +34,51 @@ import {
   LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+import Register from './screen/auth/register';
+import Login from './screen/auth/login';
+import auth from '@react-native-firebase/auth';
+import AuthStack from './routes/AuthStack';
+import HomeStack from './routes/HomeStack';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
+function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
 
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState();
+
+  // Handle user state changes
+  function onAuthStateChanged(user: any) {
+    setUser(user);
+    if (initializing) setInitializing(false);
+  }
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);
+
+  if (initializing) return null;
+
+  if (!user) {
+    return (
+      <GluestackUIProvider config={config}>
+       <NavigationContainer>
+        <AuthStack/>
+       </NavigationContainer>
+      </GluestackUIProvider>
+    );
+  }
+
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <GluestackUIProvider config={config}>
+    <NavigationContainer>
+      <HomeStack/>
+    </NavigationContainer>
+   </GluestackUIProvider>
   );
 }
 
